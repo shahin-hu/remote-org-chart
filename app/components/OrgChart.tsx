@@ -77,13 +77,24 @@ export default function OrgChart({ people, meta, refreshError }: Props) {
 
   const shownRoots = matchIds ? roots.filter((r) => hasMatch(r, matchIds)) : roots;
 
+  /**
+   * A root with no reports is not a small team, it is an unconnected person.
+   * In this data 12 of the 17 top-level people are islands — no manager and no
+   * direct reports — which is the most common edge case here by a wide margin.
+   * Rendering them identically to a real team makes the reader count rows to
+   * work that out, so they get their own labelled section instead.
+   */
+  const trees = shownRoots.filter((r) => r.children.length > 0);
+  const islands = shownRoots.filter((r) => r.children.length === 0);
+
   return (
     <main className="mx-auto max-w-5xl px-5 py-8">
       <header className="mb-6">
         <h1 className="text-2xl font-semibold tracking-tight">Organisation chart</h1>
         <p className="mt-1 text-sm text-neutral-500">
           {visible.length} of {meta.totalEmployments} employments ·{' '}
-          {diagnostics.roots.length} at the top ·{' '}
+          {roots.filter((r) => r.children.length > 0).length} teams,{' '}
+          {roots.filter((r) => r.children.length === 0).length} unconnected ·{' '}
           data as of {new Date(meta.fetchedAt).toLocaleString()} ({(meta.durationMs / 1000).toFixed(1)}s to fetch)
         </p>
         {refreshError && (
@@ -129,20 +140,49 @@ export default function OrgChart({ people, meta, refreshError }: Props) {
           Nothing matches “{query}” in the selected statuses.
         </p>
       ) : (
-        <ul className="mt-6 space-y-5">
-          {shownRoots.map((r) => (
-            <li key={r.id}>
-              <NodeRow
-                node={r}
-                reason={diagnostics.roots.find((x) => x.id === r.id)?.reason}
-                matchIds={matchIds}
-                query={query}
-                collapsed={collapsed}
-                onToggle={toggleNode}
-              />
-            </li>
-          ))}
-        </ul>
+        <>
+          {trees.length > 0 && (
+            <ul className="mt-6 space-y-5">
+              {trees.map((r) => (
+                <li key={r.id}>
+                  <NodeRow
+                    node={r}
+                    reason={diagnostics.roots.find((x) => x.id === r.id)?.reason}
+                    matchIds={matchIds}
+                    query={query}
+                    collapsed={collapsed}
+                    onToggle={toggleNode}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {islands.length > 0 && (
+            <section className="mt-9 border-t border-neutral-200 pt-5 dark:border-neutral-800">
+              <h2 className="text-sm font-medium">Not connected to anyone</h2>
+              <p className="mt-0.5 mb-3 text-xs text-neutral-500">
+                {islands.length} {islands.length === 1 ? 'person has' : 'people have'} no
+                manager recorded and no direct reports. They are real employees in the
+                data, they just are not attached to the chart anywhere.
+              </p>
+              <ul className="grid gap-x-6 sm:grid-cols-2">
+                {islands.map((r) => (
+                  <li key={r.id}>
+                    <NodeRow
+                      node={r}
+                      reason={diagnostics.roots.find((x) => x.id === r.id)?.reason}
+                      matchIds={matchIds}
+                      query={query}
+                      collapsed={collapsed}
+                      onToggle={toggleNode}
+                    />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </>
       )}
     </main>
   );
