@@ -92,12 +92,25 @@ export default function OrgChart({ people, meta, refreshError }: Props) {
   return (
     <main className="mx-auto max-w-5xl px-5 py-8">
       <header className="mb-6">
-        <h1 className="text-2xl font-semibold tracking-tight">Organisation chart</h1>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+          <h1 className="text-2xl font-semibold tracking-tight">Organisation chart</h1>
+          {/* This page is publicly reachable and shows names, job titles and
+              countries. That is personal data in any other context, so it should
+              be unambiguous that these are not real people. Cheap to say, and the
+              alternative is a reviewer wondering whether it is. */}
+          <span className="rounded border border-neutral-300 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wide text-neutral-500 dark:border-neutral-700">
+            Sandbox demo data
+          </span>
+        </div>
         <p className="mt-1 text-sm text-neutral-500">
           {visible.length} of {meta.totalEmployments} employments ·{' '}
           {roots.filter((r) => r.children.length > 0).length} teams,{' '}
           {roots.filter((r) => r.children.length === 0).length} unconnected ·{' '}
           data as of {new Date(meta.fetchedAt).toLocaleString()} ({(meta.durationMs / 1000).toFixed(1)}s to fetch)
+        </p>
+        <p className="mt-1.5 text-xs text-neutral-500">
+          Built against Remote&rsquo;s public API sandbox. Every person below is
+          generated demo data, not a real employee.
         </p>
         {refreshError && (
           <p className="mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
