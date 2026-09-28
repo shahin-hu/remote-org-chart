@@ -71,6 +71,10 @@ export async function getOrg(force = false): Promise<OrgSnapshot> {
       return snap;
     })
     .catch((err: Error) => {
+      // Loud on purpose. A build that cannot reach the API still succeeds and
+      // ships an error page, which is the right behaviour for a deploy but a
+      // terrible thing to discover silently. This line puts it in the CI log.
+      console.error(`[org] load failed: ${err.message}`);
       // Serve what we have rather than nothing. An org chart from five minutes
       // ago still answers "who does Abigail report to".
       if (cached) return { ...cached, error: `refresh failed: ${err.message}` };

@@ -33,10 +33,24 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /**
  * One HTTP GET with retries.
  *
- * Retries on 429 and 5xx only. A 401 or 404 is an answer, not a hiccup, and
- * retrying it just turns a fast failure into a slow one. Honours `Retry-After`
- * when the server sends it, otherwise exponential backoff with jitter so parallel
- * workers do not all wake up together and repeat the burst that caused the 429.
+ * WHICH FAILURES ARE WORTH RETRYING. 429 and 5xx, obviously. A 404 is an answer,
+ * not a hiccup, and retrying it turns a fast failure into a slow one.
+ *
+ * 403 IS THE INTERESTING ONE. Conventionally it means "you are not allowed" and
+ * should never be retried. But this sandbox returned 403 during a build that ran
+ * immediately after ~1,000 calls in a few minutes, while the same token returned
+ * 200 on a single call moments before and moments after. So on this API a 403
+ * appears to be how load-shedding shows up, where most APIs would send 429.
+ *
+ * I cannot prove that — I did not want to hammer a shared sandbox to reproduce
+ * it. So 403 is retried with backoff, which is safe either way: a genuine
+ * permission error still fails, just four attempts later instead of one.
+ *
+ * 401 stays fail-fast, because that is the unambiguous "bad token" signal and it
+ * is the one worth surfacing immediately.
+ *
+ * Honours `Retry-After` when sent, otherwise exponential backoff with jitter so
+ * parallel workers do not all wake together and repeat the burst that caused it.
  */
 async function get<T>(path: string): Promise<T> {
   if (!TOKEN) throw new RemoteApiError('REMOTE_API_TOKEN is not set', undefined, path);
@@ -51,7 +65,7 @@ async function get<T>(path: string): Promise<T> {
 
       if (res.ok) return (await res.json()) as T;
 
-      const retryable = res.status === 429 || res.status >= 500;
+      const retryable = res.status === 429 || res.status === 403 || res.status >= 500;
       if (!retryable || attempt === MAX_RETRIES) {
         throw new RemoteApiError(`HTTP ${res.status} on ${path}`, res.status, path);
       }
