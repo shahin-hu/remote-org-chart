@@ -35,7 +35,9 @@ Optional environment variables:
 
 ---
 
-## The problem, and why the architecture looks like this
+## Approach and architecture
+
+### The problem, and why the architecture looks like this
 
 **Remote's API does not return an org chart. It returns the edges, one node at a
 time.**
