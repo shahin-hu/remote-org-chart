@@ -4,6 +4,13 @@ An organisational chart built on Remote's public API. Live data, 201 employments
 from the sandbox company, rendered as an interactive tree with the data-quality
 problems shown rather than hidden.
 
+**Live:** https://remote-org-chart-six.vercel.app
+**Code:** https://github.com/shahin-hu/remote-org-chart
+
+> The sandbox API token expires 14 days after it was issued. If the live page
+> shows an error instead of the chart, that is why — tell me and I will issue a
+> fresh one.
+
 ---
 
 ## Run it
@@ -76,6 +83,17 @@ nobody waits for it.
 I stopped at concurrency 16. Zero errors there on both runs means I never found
 the ceiling, but this is a shared sandbox and I did not want to probe its limits.
 The default is 8, one step back from the fastest setting I verified.
+
+**Confirmed in production.** The deployed build took 16.9 s to fetch everything,
+and the live page serves in about 180 ms from cache:
+
+```
+x-nextjs-prerender: 1        the page is prebuilt
+x-vercel-cache: HIT          served from cache
+x-nextjs-stale-time: 300     revalidates every 5 minutes
+```
+
+A 17-second fetch behind a 180 ms page load. That is the decision working.
 
 ### Layout
 

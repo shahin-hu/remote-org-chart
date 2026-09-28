@@ -43,3 +43,6 @@ next-env.d.ts
 # local snapshot of sandbox data — contains real employee names, titles and
 # login emails. Never commit this to a public repo.
 /.cache/
+
+# local only, never commit
+.vercel-token
