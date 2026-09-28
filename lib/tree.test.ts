@@ -3,7 +3,7 @@ import { buildForest } from './tree';
 import type { Person } from './types';
 
 const p = (id: string, managerId: string | null, extra: Partial<Person> = {}): Person => ({
-  id, name: id.toUpperCase(), jobTitle: null, department: null, status: 'active',
+  id, name: id.toUpperCase(), jobTitle: null, department: null, status: 'active', country: null,
   managerId, managerName: null, ...extra,
 });
 

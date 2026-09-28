@@ -60,6 +60,9 @@ export default function NodeRow({
                 {node.department}
               </span>
             )}
+            {node.country && (
+              <span className="text-xs text-neutral-500">{node.country}</span>
+            )}
             {node.status && node.status !== 'active' && (
               <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs text-amber-800 dark:bg-amber-950 dark:text-amber-300">
                 {node.status}

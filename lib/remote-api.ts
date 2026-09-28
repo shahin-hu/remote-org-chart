@@ -16,7 +16,7 @@ import type { Person } from './types';
 const BASE = process.env.REMOTE_API_BASE ?? 'https://gateway.remote-sandbox.com';
 const TOKEN = process.env.REMOTE_API_TOKEN ?? '';
 
-/** How many detail calls run at once. Tuned after measuring; see decisions D5. */
+/** How many detail calls run at once. Tuned after measuring; see decisions.md #7. */
 const CONCURRENCY = Number(process.env.REMOTE_CONCURRENCY ?? 8);
 const REQUEST_TIMEOUT_MS = 20_000;
 const MAX_RETRIES = 4;
@@ -89,7 +89,8 @@ async function pooled<T, R>(items: T[], limit: number, fn: (item: T) => Promise<
 }
 
 type MinimalEmployment = { id: string; full_name?: string; job_title?: string | null;
-  department?: string | null; status?: string | null; type?: string | null };
+  department?: string | null; status?: string | null; type?: string | null;
+  country?: { name?: string | null } | null };
 
 /** Walk every page of the employments list. */
 export async function listEmployments(): Promise<MinimalEmployment[]> {
@@ -128,6 +129,7 @@ export async function fetchPeople(): Promise<{ people: Person[]; failures: { id:
         jobTitle: emp.job_title ?? e.job_title ?? null,
         department: emp.department?.name ?? emp.department ?? e.department ?? null,
         status: emp.status ?? e.status ?? null,
+        country: emp.country?.name ?? e.country?.name ?? null,
         managerId: emp.manager_employment_id ?? null,
         managerName: emp.manager ?? null,
       } satisfies Person;
@@ -138,6 +140,7 @@ export async function fetchPeople(): Promise<{ people: Person[]; failures: { id:
       return {
         id: e.id, name: e.full_name ?? '(unnamed)', jobTitle: e.job_title ?? null,
         department: e.department ?? null, status: e.status ?? null,
+        country: e.country?.name ?? null,
         managerId: null, managerName: null,
       } satisfies Person;
     }

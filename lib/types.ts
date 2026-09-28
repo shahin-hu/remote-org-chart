@@ -15,6 +15,12 @@ export type Person = {
   jobTitle: string | null;
   department: string | null;
   status: string | null;
+  /**
+   * Where this person is employed. Remote's whole product is employing people
+   * across borders without a local entity, so for this data set country is the
+   * most informative field after name and title: 201 people across 15 countries.
+   */
+  country: string | null;
   /** Parent pointer. Null means "no manager recorded". */
   managerId: string | null;
   /**
