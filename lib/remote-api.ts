@@ -92,6 +92,21 @@ type MinimalEmployment = { id: string; full_name?: string; job_title?: string | 
   department?: string | null; status?: string | null; type?: string | null;
   country?: { name?: string | null } | null };
 
+/**
+ * Only the fields an org chart needs. Their full employment record has ~50 more
+ * covering banking, contracts and onboarding; typing those would be noise, and
+ * typing this as `any` would lose the checks on the six that matter.
+ */
+type EmploymentDetail = {
+  full_name?: string | null;
+  job_title?: string | null;
+  department?: string | { name?: string | null } | null;
+  status?: string | null;
+  country?: { name?: string | null } | null;
+  manager?: string | null;
+  manager_employment_id?: string | null;
+};
+
 /** Walk every page of the employments list. */
 export async function listEmployments(): Promise<MinimalEmployment[]> {
   const all: MinimalEmployment[] = [];
@@ -121,13 +136,13 @@ export async function fetchPeople(): Promise<{ people: Person[]; failures: { id:
 
   const results = await pooled(list, CONCURRENCY, async (e) => {
     try {
-      const body = await get<{ data: { employment: Record<string, any> } }>(`/v1/employments/${e.id}`);
-      const emp = body.data.employment ?? {};
+      const body = await get<{ data: { employment: EmploymentDetail } }>(`/v1/employments/${e.id}`);
+      const emp: EmploymentDetail = body.data.employment ?? {};
       return {
         id: e.id,
         name: emp.full_name ?? e.full_name ?? '(unnamed)',
         jobTitle: emp.job_title ?? e.job_title ?? null,
-        department: emp.department?.name ?? emp.department ?? e.department ?? null,
+        department: (typeof emp.department === 'object' ? emp.department?.name : emp.department) ?? e.department ?? null,
         status: emp.status ?? e.status ?? null,
         country: emp.country?.name ?? e.country?.name ?? null,
         managerId: emp.manager_employment_id ?? null,

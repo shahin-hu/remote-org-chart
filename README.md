@@ -50,25 +50,30 @@ N+1, forced by the API rather than chosen.
 
 ### What I measured before deciding anything
 
-Against the sandbox company, 201 employments:
+Against the sandbox company, 201 employments. **Measured twice, three days apart:**
 
-| | |
-|---|---|
-| List (3 pages) | 1.3 s |
-| 201 detail calls @ concurrency 4 | 15.6 s |
-| 201 detail calls @ concurrency 8 | 8.0 s |
-| 201 detail calls @ concurrency 16 | 5.4 s |
-| Errors at any level | 0 |
-| **Full fetch** | **~7 s** |
+| Requests at once | 24 Sep | 27 Sep | Errors |
+|---|---|---|---|
+| 4 | 15.6 s | 26.4 s | 0 |
+| 8 | 8.0 s | 14.5 s | 0 |
+| 16 | 5.4 s | 8.2 s | 0 |
 
-Seven seconds does not fit inside a page request — Vercel's function limit is 10 s
-on the free tier and a cold start eats into it. So the page is **statically
-rendered and revalidated every five minutes**: the fetch happens in the
-background and nobody waits for it. That decision is a measurement, not a
-preference.
+Plus ~1.4 s for the paginated list. **Full refresh: roughly 10 s on a good day,
+20 s on a slow one**, at the default concurrency of 8.
 
-I stopped at concurrency 16 deliberately. Zero errors there means I never found
-the ceiling, but this is a shared sandbox and 5.4 s is fast enough.
+The sandbox got about 70% slower between those two runs, with no change on my
+side. I am quoting both numbers rather than the flattering one, because a single
+measurement written down as a fact is how you end up with a README that lies.
+
+Either way the conclusion holds, and the slower figure makes it stronger: this
+cannot run inside a page request. Vercel's function limit is 10 s on the free
+tier, so even the good day would be marginal. The page is **statically rendered
+and revalidated every five minutes** — the fetch happens in the background and
+nobody waits for it.
+
+I stopped at concurrency 16. Zero errors there on both runs means I never found
+the ceiling, but this is a shared sandbox and I did not want to probe its limits.
+The default is 8, one step back from the fastest setting I verified.
 
 ### Layout
 
@@ -106,7 +111,8 @@ Or through the dashboard: import the repo, add `REMOTE_API_TOKEN` under
 **Settings → Environment Variables**, deploy.
 
 **What happens at deploy time.** The page is statically generated during the
-build, so the ~7 s fetch runs once in CI rather than on a visitor's request.
+build, so the fetch (10-20 s, see the measurements above) runs once in CI
+rather than on a visitor's request.
 After that it revalidates every five minutes in the background. The first
 visitor after a deploy sees a page that is already built.
 

@@ -26,11 +26,11 @@ const me = await get('/v1/identity/current');
 console.log('1. identity ok:', JSON.stringify(me).slice(0, 300), '\n');
 
 // 2. how many people, how many pages
-let page = 1, list = [], meta = null;
+let page = 1, list = [];
 const tList = Date.now();
 for (;;) {
   const b = await get(`/v1/employments?page=${page}&page_size=100`);
-  meta = b.data;
+
   list.push(...(b.data.employments ?? []));
   if (!b.data.total_pages || page >= b.data.total_pages) break;
   page++;

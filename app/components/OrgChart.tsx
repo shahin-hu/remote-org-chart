@@ -63,7 +63,8 @@ export default function OrgChart({ people, meta, refreshError }: Props) {
 
   const toggleStatus = (s: string) => {
     const next = new Set(statuses);
-    next.has(s) ? next.delete(s) : next.add(s);
+    if (next.has(s)) next.delete(s);
+    else next.add(s);
     // Never let the viewer filter down to nothing and see an empty page with no
     // explanation. Keeping at least one status on makes the state recoverable.
     if (next.size) setStatuses(next);
@@ -71,7 +72,8 @@ export default function OrgChart({ people, meta, refreshError }: Props) {
 
   const toggleNode = (id: string) => {
     const next = new Set(collapsed);
-    next.has(id) ? next.delete(id) : next.add(id);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
     setCollapsed(next);
   };
 
