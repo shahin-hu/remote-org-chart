@@ -77,6 +77,35 @@ export default function OrgChart({ people, meta, refreshError }: Props) {
     setCollapsed(next);
   };
 
+  /**
+   * The five numbers worth knowing before scrolling. Deliberately includes the
+   * two unflattering ones — the people nobody manages, and the ones attached to
+   * nothing — because they are the most interesting thing in this data set.
+   */
+  const summary = useMemo(() => {
+    const teams = roots.filter((r) => r.children.length > 0);
+    const islands = roots.filter((r) => r.children.length === 0);
+    const countries = new Set(visible.map((p) => p.country).filter(Boolean)).size;
+
+    // Deepest reporting line. Iterative walk, same reason as in buildForest:
+    // recursion on an arbitrarily deep chain is a crash waiting to happen.
+    let maxDepth = 0;
+    const stack = [...roots];
+    while (stack.length) {
+      const n = stack.pop()!;
+      if (n.depth > maxDepth) maxDepth = n.depth;
+      for (const c of n.children) stack.push(c);
+    }
+
+    return [
+      { label: 'people shown', value: visible.length, note: `of ${meta.totalEmployments} employments` },
+      { label: 'countries', value: countries, note: 'employed across' },
+      { label: 'teams', value: teams.length, note: 'with direct reports' },
+      { label: 'unconnected', value: islands.length, note: 'no manager, no reports' },
+      { label: 'levels deep', value: maxDepth + 1, note: 'longest reporting line' },
+    ];
+  }, [roots, visible, meta.totalEmployments]);
+
   const shownRoots = matchIds ? roots.filter((r) => hasMatch(r, matchIds)) : roots;
 
   /**
@@ -102,15 +131,32 @@ export default function OrgChart({ people, meta, refreshError }: Props) {
             Sandbox demo data
           </span>
         </div>
-        <p className="mt-1 text-sm text-neutral-500">
-          {visible.length} of {meta.totalEmployments} employments ·{' '}
-          {roots.filter((r) => r.children.length > 0).length} teams,{' '}
-          {roots.filter((r) => r.children.length === 0).length} unconnected ·{' '}
-          data as of {new Date(meta.fetchedAt).toLocaleString()} ({(meta.durationMs / 1000).toFixed(1)}s to fetch)
-        </p>
-        <p className="mt-1.5 text-xs text-neutral-500">
+        <p className="mt-1.5 max-w-prose text-sm text-neutral-500">
           Built against Remote&rsquo;s public API sandbox. Every person below is
           generated demo data, not a real employee.
+        </p>
+
+        {/* The shape of the company, before anyone scrolls.
+            This used to be one line of grey text. The most interesting thing in
+            this data is that it is five real teams plus twelve people attached to
+            nobody, and a sentence buried in a subtitle made the reader work that
+            out. Same numbers, just not hidden. */}
+        <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded border border-neutral-200 bg-neutral-200 sm:grid-cols-5 dark:border-neutral-800 dark:bg-neutral-800">
+          {summary.map((s) => (
+            <div key={s.label} className="bg-white px-4 py-3 dark:bg-neutral-950">
+              <dt className="text-xs text-neutral-500">{s.label}</dt>
+              <dd className="mt-0.5 text-2xl font-semibold tabular-nums tracking-tight">
+                {s.value}
+              </dd>
+              {s.note && <dd className="text-[11px] text-neutral-400">{s.note}</dd>}
+            </div>
+          ))}
+        </dl>
+
+        <p className="mt-2 text-xs text-neutral-500">
+          Data as of {new Date(meta.fetchedAt).toLocaleString()} · took{' '}
+          {(meta.durationMs / 1000).toFixed(1)}s to fetch {meta.totalEmployments} employments
+          over {meta.totalEmployments + 1} API calls
         </p>
         {refreshError && (
           <p className="mt-2 rounded border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
