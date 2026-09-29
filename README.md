@@ -29,6 +29,8 @@ Get a token from the sandbox: **Integrations → API**. Sandbox tokens start wit
 | `npm run dev` | development server |
 | `npm run build && npm start` | production build, the same one that deploys |
 | `npm test` | unit tests for the tree builder (10 tests, no network needed) |
+| `npm run typecheck` | TypeScript, including the route types Next generates |
+| `npm run lint` | ESLint |
 | `node --env-file=.env.local scripts/probe.mjs` | measure the API: size, timing at three concurrency levels, data quality |
 | `node --env-file=.env.local scripts/snapshot.mjs` | cache a full fetch to `.cache/` so development does not hammer the sandbox |
 
@@ -156,6 +158,17 @@ tokens are revoked after 14 days, so a live demo has a shelf life.
 | Everyone | 201 | **45** | 0 | 4 |
 | Active only *(default)* | 171 | **17** | 0 | 4 |
 | Excluding archived | 176 | 22 | 0 | 4 |
+
+**Fifteen countries across 201 people.** That is why the chart shows a country on
+every person, and why it is one of the five numbers in the header. The brief asks
+for "key details **like** name, title, department, reporting line" — "like" means
+examples, not a closed list. For most companies country would be a minor field.
+For Remote, whose product is employing people in other countries without a local
+entity, a 201-person company spread across 15 is the whole point. It was already
+in the list response and unused.
+
+*(The header shows 14 rather than 15 because it counts only the employees
+currently displayed. Switch the `archived` filter on and it becomes 15.)*
 
 **It is a forest, not a tree.** Even among active employees, 17 people have no
 manager. Any chart that assumes a single person at the top is wrong about this
