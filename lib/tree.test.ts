@@ -20,12 +20,27 @@ test('happy path: one root, correct depth and subtree sizes', () => {
 });
 
 test('multiple roots are all returned, largest subtree first', () => {
+  // Names chosen so size order and alphabetical order DISAGREE. An earlier
+  // version of this test used 'ceo' and 'solo', where both rules give the same
+  // answer, so it passed even when the sort was alphabetical. A test that cannot
+  // distinguish the rule it is checking from a different rule is not a test.
   const { roots, diagnostics } = buildForest([
-    p('solo', null), p('ceo', null), p('vp', 'ceo'),
+    p('alice', null),                                  // alphabetically first, team of 1
+    p('zara', null), p('bob', 'zara'), p('carol', 'zara'), // alphabetically last, team of 3
   ]);
   expect(roots).toHaveLength(2);
-  expect(roots[0].id, 'bigger subtree sorts first').toBe('ceo');
+  expect(roots[0].id, 'bigger team sorts first, not alphabetically').toBe('zara');
+  expect(roots[1].id).toBe('alice');
   expect(diagnostics.roots.map((r) => r.reason)).toEqual(['no_manager', 'no_manager']);
+});
+
+test('direct reports are listed alphabetically, whatever order they arrive in', () => {
+  // Inserted deliberately out of order. Without a stable sort the chart would
+  // reshuffle between renders, which is worse than being in the wrong order.
+  const { roots } = buildForest([
+    p('boss', null), p('zoe', 'boss'), p('adam', 'boss'), p('mia', 'boss'),
+  ]);
+  expect(roots[0].children.map((c) => c.name)).toEqual(['ADAM', 'MIA', 'ZOE']);
 });
 
 test('orphan: manager id points outside the set, person stays visible', () => {
