@@ -28,7 +28,7 @@ Get a token from the sandbox: **Integrations → API**. Sandbox tokens start wit
 |---|---|
 | `npm run dev` | development server |
 | `npm run build && npm start` | production build, the same one that deploys |
-| `npm test` | unit tests for the tree builder (10 tests, no network needed) |
+| `npm test` | 22 unit tests, no network needed (see Testing below) |
 | `npm run typecheck` | TypeScript, including the route types Next generates |
 | `npm run lint` | ESLint |
 | `node --env-file=.env.local scripts/probe.mjs` | measure the API: size, timing at three concurrency levels, data quality |
@@ -148,6 +148,46 @@ tokens are revoked after 14 days, so a live demo has a shelf life.
 | `REMOTE_API_BASE` | no | defaults to the sandbox gateway |
 | `REMOTE_CONCURRENCY` | no | defaults to 8 |
 | `ORG_CACHE_TTL_MS` | no | defaults to 5 minutes |
+
+---
+
+## Testing
+
+**22 tests, no network required.** `fetch` is stubbed, so the cases that matter
+are reproducible on demand rather than dependent on what the sandbox happens to
+be doing.
+
+| File | Covers |
+|---|---|
+| `lib/tree.test.ts` (11) | Multiple roots, orphans, cycles, self-reference, a cycle with a tail, external managers, empty input, a 20,000-deep chain, both sort rules, and the invariant that nobody is ever dropped |
+| `lib/remote-api.test.ts` (11) | Which HTTP failures retry and which do not, pagination across pages, the N+1 degrading rather than blanking when one call fails, detail-over-list field precedence, that concurrency is actually bounded, and failing before any request when there is no token |
+
+### The tests were checked by breaking the code on purpose
+
+A test that never fails is decoration. So I mutated the source nine times and
+confirmed each change was caught:
+
+| Change made to the source | Caught |
+|---|---|
+| Drop orphans instead of surfacing them | yes |
+| Remove cycle detection entirely | yes, 3 tests |
+| Sort roots alphabetically instead of by team size | **no — see below** |
+| Off-by-one in subtree size | yes, 2 tests |
+| Stop retrying 403 | yes |
+| Make 401 retryable | yes, 2 tests |
+| Stop after the first page of results | yes |
+| Remove the concurrency limit | yes |
+| Throw on a failed detail call instead of degrading | yes |
+
+**The third one is the interesting result.** Changing the root sort from "largest
+team first" to "alphabetical" broke nothing, because the fixture used `ceo` and
+`solo`, where both rules give the same answer. The test could not tell the rule it
+was checking from a different rule, which means it was not testing the sort at
+all.
+
+Fixed by choosing names where the two orders disagree, and added a second test for
+child ordering, which had the same blind spot. Both now fail when the sort is
+changed.
 
 ---
 
